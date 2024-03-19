@@ -52,7 +52,9 @@ class BreathingExercise:
 
     # Function to generate bell sound
     @staticmethod
-    def generate_bell_sound(fundamental_frequency, duration, sample_rate=44100):
+    def generate_bell_sound(
+        fundamental_frequency: float, duration: float, sample_rate: int = 44100
+    ) -> np.ndarray:
         harmonics = [1, 2, 2.8, 3.5, 4.5]
         harmonic_strengths = [0.5, 0.75, 0.33, 0.14, 0.05]
         t = np.linspace(0, duration, int(duration * sample_rate), False)
@@ -65,7 +67,9 @@ class BreathingExercise:
         return np.int16(sound * 32767)
 
     # Function to sequence bell sounds
-    def sequence_bell_sounds(self, high_freq, low_freq, duration, sample_rate=44100):
+    def sequence_bell_sounds(
+        self, high_freq: float, low_freq: float, duration: int, sample_rate: int = 44100
+    ) -> np.ndarray:
         inhale_duration = self.cycle_duration / 2
         exhale_duration = self.cycle_duration / 2
 
@@ -81,7 +85,7 @@ class BreathingExercise:
         return sound_sequence
 
     # Function to create a frame with a circle
-    def make_frame(self, t):
+    def make_frame(self, t: float) -> np.ndarray:
         canvas_size = (640, 480)
         center = (int(canvas_size[0] / 2), int(canvas_size[1] / 2))
         max_radius = min(canvas_size) / 4
@@ -155,7 +159,7 @@ def generate_video(bpm: int) -> None:
 # executable/script.
 
 
-def parse_args(args):
+def parse_args(args: list) -> argparse.Namespace:
     """Parse command line parameters
 
     Args:
@@ -191,7 +195,7 @@ def parse_args(args):
     return parser.parse_args(args)
 
 
-def setup_logging(loglevel):
+def setup_logging(loglevel: int) -> None:
     """Setup basic logging
 
     Args:
@@ -203,7 +207,7 @@ def setup_logging(loglevel):
     )
 
 
-def main(args):
+def main(args: list) -> None:
     """Wrapper allowing :func:`fib` to be called with string arguments in a CLI fashion
 
     Instead of returning the value from :func:`fib`, it prints the result to the
@@ -213,14 +217,14 @@ def main(args):
       args (List[str]): command line parameters as list of strings
           (for example  ``["--verbose", "42"]``).
     """
-    args = parse_args(args)
-    setup_logging(args.loglevel)
+    parsed_args = parse_args(args)
+    setup_logging(parsed_args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    generate_video(args.bpm)
+    generate_video(parsed_args.bpm)
     _logger.info("Script ends here")
 
 
-def run():
+def run() -> None:
     """Calls :func:`main` passing the CLI arguments extracted from :obj:`sys.argv`
 
     This function can be used as entry point to create console scripts with setuptools.
