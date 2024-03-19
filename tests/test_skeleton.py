@@ -1,19 +1,8 @@
-import pytest
-
-from respiring.skeleton import fib, main
+from respiring.skeleton import main
 
 __author__ = "danibene"
 __copyright__ = "danibene"
 __license__ = "MIT"
-
-
-def test_fib():
-    """API Tests"""
-    assert fib(1) == 1
-    assert fib(2) == 1
-    assert fib(7) == 13
-    with pytest.raises(AssertionError):
-        fib(-10)
 
 
 def test_main(capsys):
@@ -22,4 +11,4 @@ def test_main(capsys):
     # https://docs.pytest.org/en/stable/capture.html
     main(["7"])
     captured = capsys.readouterr()
-    assert "The 7-th Fibonacci number is 13" in captured.out
+    assert "Building video" in captured.out
