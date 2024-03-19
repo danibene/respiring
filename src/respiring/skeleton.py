@@ -24,6 +24,11 @@ import argparse
 import logging
 import sys
 
+import cv2
+import numpy as np
+from moviepy.editor import AudioFileClip, VideoClip
+from scipy.io.wavfile import write
+
 from respiring import __version__
 
 __author__ = "danibene"
@@ -40,20 +45,108 @@ _logger = logging.getLogger(__name__)
 # when using this Python module as a library.
 
 
-def fib(n):
-    """Fibonacci example function
+class BreathingExercise:
+    def __init__(self, bpm: int):
+        self.bpm = bpm
+        self.cycle_duration = 60 / bpm
+
+    # Function to generate bell sound
+    @staticmethod
+    def generate_bell_sound(fundamental_frequency, duration, sample_rate=44100):
+        harmonics = [1, 2, 2.8, 3.5, 4.5]
+        harmonic_strengths = [0.5, 0.75, 0.33, 0.14, 0.05]
+        t = np.linspace(0, duration, int(duration * sample_rate), False)
+        sound = np.zeros_like(t)
+        for harmonic, strength in zip(harmonics, harmonic_strengths):
+            sound += strength * np.sin(2 * np.pi * harmonic * fundamental_frequency * t)
+        envelope = np.e ** (-3 * t)
+        sound *= envelope
+        sound /= np.max(np.abs(sound))
+        return np.int16(sound * 32767)
+
+    # Function to sequence bell sounds
+    def sequence_bell_sounds(self, high_freq, low_freq, duration, sample_rate=44100):
+        inhale_duration = self.cycle_duration / 2
+        exhale_duration = self.cycle_duration / 2
+
+        inhale_sound = self.generate_bell_sound(high_freq, inhale_duration, sample_rate)
+        exhale_sound = self.generate_bell_sound(low_freq, exhale_duration, sample_rate)
+
+        sound_sequence = np.array([], dtype=np.int16)
+        for _ in range(int(duration / self.cycle_duration)):
+            sound_sequence = np.concatenate(
+                (sound_sequence, inhale_sound, exhale_sound)
+            )
+
+        return sound_sequence
+
+    # Function to create a frame with a circle
+    def make_frame(self, t):
+        canvas_size = (640, 480)
+        center = (int(canvas_size[0] / 2), int(canvas_size[1] / 2))
+        max_radius = min(canvas_size) / 4
+
+        # Calculate the current phase of the breathing cycle
+        phase = (t % self.cycle_duration) / self.cycle_duration
+        if phase <= 0.5:
+            # Inhale
+            radius = max_radius * (2 * phase)
+        else:
+            # Exhale
+            radius = max_radius * (2 * (1 - phase))
+
+        # Create an empty frame
+        frame = np.zeros((canvas_size[1], canvas_size[0], 3), dtype=np.uint8)
+        # Draw the circle
+        cv2.circle(frame, center, int(radius), (255, 255, 255), -1)
+
+        return frame
+
+
+def generate_video(bpm: int) -> None:
+    """Generate a video with breathing instructions and bell sounds
 
     Args:
-      n (int): integer
+        bpm (int): Breaths per minute
 
     Returns:
-      int: n-th Fibonacci number
+        None
     """
-    assert n > 0
-    a, b = 1, 1
-    for _i in range(n - 1):
-        a, b = b, a + b
-    return a
+    # Parameters for both sound and video
+    duration = 60  # seconds
+    sample_rate = 44100
+    frame_rate = 24  # frames per second
+    high_freq = 220  # Higher fundamental frequency for inhale
+    low_freq = 110  # Lower fundamental frequency for exhale
+
+    # Create the breathing exercise object
+    breathing_exercise = BreathingExercise(bpm)
+
+    # Generate the sequence
+    sound_sequence = breathing_exercise.sequence_bell_sounds(
+        high_freq, low_freq, duration, sample_rate
+    )
+
+    # Save to a WAV file
+    sound_filename = "breathing_bells.wav"
+    write(sound_filename, sample_rate, sound_sequence)
+
+    # Create the video clip
+    video_clip = VideoClip(breathing_exercise.make_frame, duration=duration).set_fps(
+        frame_rate
+    )
+
+    # Add audio to the video clip
+    video_clip = video_clip.set_audio(AudioFileClip(sound_filename))
+
+    # Write the video file with audio
+    final_filename = "breathing_instruction_with_sound.mp4"
+    # video_clip.write_videofile(final_filename, fps=frame_rate)
+    video_clip.write_videofile(
+        final_filename, fps=frame_rate, codec="libx264", audio_codec="aac"
+    )
+
+    _logger.info(f"Breathing exercise video with bell sounds saved to {final_filename}")
 
 
 # ---- CLI ----
@@ -72,13 +165,13 @@ def parse_args(args):
     Returns:
       :obj:`argparse.Namespace`: command line parameters namespace
     """
-    parser = argparse.ArgumentParser(description="Just a Fibonacci demonstration")
+    parser = argparse.ArgumentParser(description="Just a demonstration")
     parser.add_argument(
         "--version",
         action="version",
         version=f"respiring {__version__}",
     )
-    parser.add_argument(dest="n", help="n-th Fibonacci number", type=int, metavar="INT")
+    parser.add_argument(dest="bpm", help="Breaths per minute", type=int)
     parser.add_argument(
         "-v",
         "--verbose",
@@ -123,7 +216,7 @@ def main(args):
     args = parse_args(args)
     setup_logging(args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    print(f"The {args.n}-th Fibonacci number is {fib(args.n)}")
+    generate_video(args.bpm)
     _logger.info("Script ends here")
 
 
