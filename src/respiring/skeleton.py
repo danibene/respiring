@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 import sys
 
 import cv2
@@ -88,7 +89,11 @@ class BreathingExercise:
         return frame
 
 
-def generate_video(duration: int = 300, pattern: tuple = (4, 7, 8)) -> None:
+def generate_video(
+    duration: int = 300,
+    pattern: tuple = (4, 7, 8),
+    output_filepath: str = "breathing_instruction_with_sound.mp4",
+) -> None:
     """Generate a video with breathing instructions and bell sounds
 
     Args:
@@ -112,8 +117,8 @@ def generate_video(duration: int = 300, pattern: tuple = (4, 7, 8)) -> None:
         high_freq, low_freq, duration, sample_rate
     )
 
-    # Save the generated sound sequence to a WAV file
-    sound_filename = "breathing_bells.wav"
+    # Save the generated sound sequence to a temporary WAV file
+    sound_filename = output_filepath.replace(".mp4", "_TEMP.wav")
     write(sound_filename, sample_rate, sound_sequence)
 
     # Create the video clip with visual instructions based on the breathing exercise
@@ -125,12 +130,16 @@ def generate_video(duration: int = 300, pattern: tuple = (4, 7, 8)) -> None:
     video_clip = video_clip.set_audio(AudioFileClip(sound_filename))
 
     # Write the final video file with audio
-    final_filename = "breathing_instruction_with_sound.mp4"
     video_clip.write_videofile(
-        final_filename, fps=frame_rate, codec="libx264", audio_codec="aac"
+        output_filepath, fps=frame_rate, codec="libx264", audio_codec="aac"
     )
 
-    _logger.info(f"Breathing exercise video with bell sounds saved to {final_filename}")
+    # Remove the temporary WAV file
+    os.remove(sound_filename)
+
+    _logger.info(
+        f"Breathing exercise video with bell sounds saved to {output_filepath}"
+    )
 
 
 # ---- CLI ----
@@ -161,6 +170,13 @@ def parse_args(args: list) -> argparse.Namespace:
         help="Breathing pattern as a tuple (inhale, hold, exhale) in seconds",
         type=lambda x: tuple(map(int, x.split(","))),
         default=(4, 7, 8),
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        help="Output file path for the video, including the file extension",
+        type=str,
+        default="breathing_instruction_with_sound.mp4",
     )
     parser.add_argument(
         "-v",
@@ -206,7 +222,7 @@ def main(args: list) -> None:
     parsed_args = parse_args(args)
     setup_logging(parsed_args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    generate_video(pattern=parsed_args.pattern)
+    generate_video(pattern=parsed_args.pattern, output_filepath=parsed_args.output)
     _logger.info("Script ends here")
 
 

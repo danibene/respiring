@@ -1,5 +1,5 @@
 import numpy as np
-from pytest import CaptureFixture
+from pytest import CaptureFixture, TempPathFactory
 
 from respiring.skeleton import BreathingExercise, main
 
@@ -69,10 +69,13 @@ class TestBreathingExercise:
             ), "Frame background color is not black."
 
 
-def test_main(capsys: CaptureFixture) -> None:
+def test_main(capsys: CaptureFixture, tmp_path_factory: TempPathFactory) -> None:
     """CLI Tests"""
     # capsys is a pytest fixture that allows asserts against stdout/stderr
     # https://docs.pytest.org/en/stable/capture.html
-    main(["--pattern", "6, 0, 6"])
+    # tmp_path_factory is a pytest fixture that creates temporary directories
+    # https://docs.pytest.org/en/stable/tmpdir.html
+    output_filepath = tmp_path_factory.mktemp("data") / "test.mp4"
+    main(["--pattern", "6, 0, 6", "--output", str(output_filepath)])
     captured = capsys.readouterr()
     assert "Building video" in captured.out
