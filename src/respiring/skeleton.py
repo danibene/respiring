@@ -107,11 +107,11 @@ class BreathingExercise:
         return frame
 
 
-def generate_video(bpm: int) -> None:
+def generate_video(bpm: int = 6) -> None:
     """Generate a video with breathing instructions and bell sounds
 
     Args:
-        bpm (int): Breaths per minute
+        bpm (int): Breaths per minute. Defaults to 6.
 
     Returns:
         None
@@ -175,7 +175,14 @@ def parse_args(args: list) -> argparse.Namespace:
         action="version",
         version=f"respiring {__version__}",
     )
-    parser.add_argument(dest="bpm", help="Breaths per minute", type=int)
+    # Make the argument optional
+    parser.add_argument(
+        "-b",
+        "--bpm",
+        help="Breaths per minute",
+        type=int,
+        default=6,
+    )
     parser.add_argument(
         "-v",
         "--verbose",
