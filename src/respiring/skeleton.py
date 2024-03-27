@@ -165,6 +165,13 @@ def parse_args(args: list) -> argparse.Namespace:
         version=f"respiring {__version__}",
     )
     parser.add_argument(
+        "-d",
+        "--duration",
+        help="Duration of the video in seconds",
+        type=int,
+        default=300,
+    )
+    parser.add_argument(
         "-p",
         "--pattern",
         help="Breathing pattern as a tuple (inhale, hold, exhale) in seconds",
@@ -222,7 +229,11 @@ def main(args: list) -> None:
     parsed_args = parse_args(args)
     setup_logging(parsed_args.loglevel)
     _logger.debug("Starting crazy calculations...")
-    generate_video(pattern=parsed_args.pattern, output_filepath=parsed_args.output)
+    generate_video(
+        duration=parsed_args.duration,
+        pattern=parsed_args.pattern,
+        output_filepath=parsed_args.output,
+    )
     _logger.info("Script ends here")
 
 
