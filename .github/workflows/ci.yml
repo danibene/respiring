@@ -68,7 +68,7 @@ jobs:
         include:  # So run those legacy versions on Intel CPUs.
           - python: "3.7"
             os: macos-13
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -90,7 +90,7 @@ jobs:
         with:
           path-to-lcov: coverage.lcov
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          flag-name: ${{ matrix.platform }} - py${{ matrix.python }}
+          flag-name: ${{ matrix.os }} - py${{ matrix.python }}
           parallel: true
 
   finalize:
